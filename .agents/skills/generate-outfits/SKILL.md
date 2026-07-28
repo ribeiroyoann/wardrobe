@@ -1,6 +1,6 @@
 ---
 name: generate-outfits
-description: Curate complete outfits from the local Wardrobe database and generate identity-preserving square modeled photos for every selected look end to end. Use when a user asks Codex for outfit ideas, combinations, looks, styling suggestions, a lookbook, or modeled outfit images based on clothes already imported into this Wardrobe.
+description: Curate complete outfits from the local Wardrobe database and generate anonymous fit-model square photos for every selected look end to end. Use when a user asks Codex for outfit ideas, combinations, looks, styling suggestions, a lookbook, or modeled outfit images based on clothes already imported into this Wardrobe.
 ---
 
 # Generate Outfits
@@ -18,9 +18,9 @@ Do the workflow end to end after receiving the count. Do not stop after returnin
 ## Requirements
 
 - Read and follow the built-in `imagegen` skill before generating images.
-- Require `data/library.json`, enough tops and bottoms for the requested count, and a local identity reference at `data/model-reference.png` or `WARDROBE_MODEL_REFERENCE`.
-- Keep every source garment and identity image local and unchanged.
-- Never add `data/`, the identity reference, garment images, or generated photos to Git.
+- Require `data/library.json`, enough tops and bottoms for the requested count, and a local anonymous fit-model reference at `data/fit-model-reference.png` or `WARDROBE_MODEL_REFERENCE`.
+- Keep every source garment and fit-model image local and unchanged.
+- Never add `data/`, the fit-model reference, garment images, or generated photos to Git.
 - Use only wardrobe items that exist in the current database and whose local assets resolve successfully.
 - Generate exactly the requested number of unique outfits and exactly one accepted modeled photo for each.
 
@@ -28,7 +28,7 @@ Do the workflow end to end after receiving the count. Do not stop after returnin
 
 Use subagents when the user requests more than eight outfits or explicitly asks for parallel generation. Keep one main agent responsible for the complete wardrobe inventory, global combination uniqueness, garment-usage balance, manifest reconciliation, and final QA.
 
-Assign each worker a disjoint set of outfit IDs plus the exact identity and garment reference paths. Require every worker to return the outfit ID, filled prompt, reference list, generated path, status, and visual-review notes. Never allow two workers to generate or write the same outfit ID. Run workers in waves when concurrency is limited, reconcile results after every wave, and resume only missing or failed IDs.
+Assign each worker a disjoint set of outfit IDs plus the exact fit-model and garment reference paths. Require every worker to return the outfit ID, filled prompt, reference list, generated path, status, and visual-review notes. Never allow two workers to generate or write the same outfit ID. Run workers in waves when concurrency is limited, reconcile results after every wave, and resume only missing or failed IDs.
 
 ## 1. Inspect the wardrobe
 
@@ -84,7 +84,7 @@ Use stable lowercase hyphenated IDs. Reject duplicate garment combinations even 
 
 Create one generation package per outfit:
 
-1. Identity reference
+1. Anonymous fit-model reference
 2. Exact top cutout
 3. Exact bottom cutout
 4. Optional exact outer layer
@@ -102,11 +102,11 @@ Generate in bounded batches when the collection is large. Track every outfit as 
 
 ## 5. Verify and correct
 
-Compare every output against the identity and all garment references. Inspect contact sheets of at most 12 modeled outfits, then open questionable images individually.
+Compare every output against the fit-model and all garment references. Inspect contact sheets of at most 12 modeled outfits, then open questionable images individually.
 
 Require:
 
-- recognizable identity, face, hair, age, build, and body proportions
+- anonymous face treatment plus the fit model's slim athletic build and body proportions
 - every selected garment present and recognizable
 - exact garment color, material, fit, construction, graphics, logos, text, proportions, and closures
 - complete head-to-shoes framing with readable outfit and realistic anatomy
@@ -114,7 +114,7 @@ Require:
 - no unselected visible garments except plain neutral shoes or invisible basics when no shoes were selected
 - no extra person, text overlay, watermark, product mockup, or synthetic AI polish
 
-Regenerate identity drift, missing or redesigned garments, fake closures or text, anatomy failures, or cropped feet. Do not mark an outfit accepted based on plausibility alone.
+Regenerate recognizable faces, body-proportion drift, missing or redesigned garments, fake closures or text, anatomy failures, or cropped feet. Do not mark an outfit accepted based on plausibility alone.
 
 ## 6. Deliver locally
 

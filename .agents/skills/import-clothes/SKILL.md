@@ -1,6 +1,6 @@
 ---
 name: import-clothes
-description: Extract unique garments from outfit or model photos, reconstruct clean transparent clothing cutouts, generate identity-preserving modeled editorial photos, and import approved items directly into this Wardrobe project's local JSON database. Use when a user asks Codex to add, ingest, extract, or import clothes from a folder of photos into Wardrobe, wants modeled photos for imported pieces, or wants finished wardrobe PNGs without using the in-app OpenAI import flow.
+description: Extract unique garments from outfit or model photos, reconstruct clean transparent clothing cutouts, generate anonymous fit-model editorial photos, and import approved items directly into this Wardrobe project's local JSON database. Use when a user asks Codex to add, ingest, extract, or import clothes from a folder of photos into Wardrobe, wants modeled photos for imported pieces, or wants finished wardrobe PNGs without using the in-app OpenAI import flow.
 ---
 
 # Import Clothes
@@ -11,7 +11,7 @@ Turn photos of worn clothing into source-faithful transparent catalog PNGs and m
 
 Obtain the source-image folder unless the user already supplied it. Resolve relative paths from the repository root. Confirm this is the Wardrobe repository by checking for `package.json`, `scripts/import-job-api.mjs`, and `data/` in `.gitignore`.
 
-At the start, check for the identity reference at `data/model-reference.png` or the local path configured by `WARDROBE_MODEL_REFERENCE`. If neither exists, ask: `Please provide a clear PNG reference photo of yourself for the modeled wardrobe images. What is its local path?` Do not begin modeled generation until the user supplies it. Keep the image local and never add it to Git.
+At the start, check for the anonymous fit-model reference at `data/fit-model-reference.png` or the local path configured by `WARDROBE_MODEL_REFERENCE`. If neither exists, ask: `Please provide an anonymous fit-model PNG for the modeled wardrobe images. What is its local path?` Do not begin modeled generation until the user supplies it. Keep the image local and never add it to Git.
 
 Default to direct database import when the user asks to add clothes to Wardrobe. If they only request cutouts, ask for a new output-folder name instead and skip the database step.
 
@@ -131,25 +131,25 @@ Inspect checkerboard contact sheets of at most 12 items and compare sensitive re
 
 ### 7. Generate modeled photos
 
-Use `data/model-reference.png` as the identity reference unless `WARDROBE_MODEL_REFERENCE` points to another local PNG. If neither exists, ask the user for a clear reference photo before continuing. Never add that photo to Git.
+Use `data/fit-model-reference.png` as the anonymous body-proportion reference unless `WARDROBE_MODEL_REFERENCE` points to another local PNG. If neither exists, ask the user for an anonymous fit-model reference before continuing. Never add that image to Git.
 
-For every accepted cutout, use Imagegen with the identity image first and exact garment PNG second. Save a horizontal 3:2 PNG as `$WORK/modeled/SLUG.png` and set `modeledFile` to `SLUG.png` in the manifest.
+For every accepted cutout, use Imagegen with the anonymous fit-model image first and exact garment PNG second. Save a horizontal 3:2 PNG as `$WORK/modeled/SLUG.png` and set `modeledFile` to `SLUG.png` in the manifest.
 
 Use this generation brief:
 
 ```text
-Create a professional horizontal 3:2 editorial fashion photograph of the person in Image 1 wearing the exact clothing item from Image 2.
+Create a professional horizontal 3:2 editorial fashion photograph of the anonymous fit model in Image 1 wearing the exact clothing item from Image 2.
 
-Preserve the person's recognizable face, hair, age, build, skin texture, and body proportions. Preserve the featured garment precisely: color, material, fit, construction, pattern, graphics, logos, text, proportions, closure, and distinctive details. Do not redesign, simplify, replace, or reinterpret it.
+Preserve only the fit model's slim athletic build and realistic body proportions. Never create a recognizable face or likeness: keep the face outside the frame, turned away, or fully obscured by natural framing and shadow. Preserve the featured garment precisely: color, material, fit, construction, pattern, graphics, logos, text, proportions, closure, and distinctive details. Do not redesign, simplify, replace, or reinterpret it.
 
 Use understated neutral supporting clothes that complete the outfit without covering or competing with the featured item. Keep the full featured item and every important detail visible. Use a natural pose with arms and accessories away from it.
 
 Place the person in a tasteful real-world setting with warm professional natural light, realistic shadows, authentic skin and fabric texture, and restrained editorial color grading. Leave environmental breathing room for flexible cropping.
 
-Avoid hidden garment details, invented closures, fake text or logos, extra statement pieces, crossed arms, bags or scarves covering the item, cropped item extremities, extra people, text overlays, watermarks, product-mockup styling, or synthetic AI polish.
+Avoid recognizable facial features, portrait emphasis, hidden garment details, invented closures, fake text or logos, extra statement pieces, crossed arms, bags or scarves covering the item, cropped item extremities, extra people, text overlays, watermarks, product-mockup styling, or synthetic AI polish.
 ```
 
-Vary understated settings across a batch while keeping the identity and art direction cohesive. Compare each photo against both references. Regenerate identity drift, garment redesign, blocked details, anatomy failures, or incorrect framing.
+Vary understated settings across a batch while keeping the anonymous body proportions and art direction cohesive. Compare each photo against both references. Regenerate recognizable faces, body-proportion drift, garment redesign, blocked details, anatomy failures, or incorrect framing.
 
 ### 8. Import into Wardrobe
 

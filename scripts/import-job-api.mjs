@@ -351,7 +351,7 @@ export function wardrobeImportApi(options = {}) {
 
   async function setupStatus() {
     const hasApiKey = Boolean(setting("OPENAI_API_KEY").trim());
-    const referenceSetting = setting("WARDROBE_MODEL_REFERENCE", "data/model-reference.png");
+    const referenceSetting = setting("WARDROBE_MODEL_REFERENCE", "data/fit-model-reference.png");
     const referencePath = path.resolve(root, referenceSetting);
     let hasModelReference = false;
     try {
@@ -453,16 +453,16 @@ export function wardrobeImportApi(options = {}) {
             : `garment-${current.stages.garment.attempts}.png`;
           const garmentFile = path.join(dir, garmentName);
           const garment = { data: await readFile(garmentFile), mime: "image/png", name: "garment.png" };
-          const modelPath = path.resolve(root, setting("WARDROBE_MODEL_REFERENCE", "data/model-reference.png"));
+          const modelPath = path.resolve(root, setting("WARDROBE_MODEL_REFERENCE", "data/fit-model-reference.png"));
           let modelData;
           try {
             modelData = await readFile(modelPath);
           } catch (error) {
-            if (error.code === "ENOENT") throw new Error(`Model reference not found at ${modelPath}. Set WARDROBE_MODEL_REFERENCE or add data/model-reference.png.`);
+            if (error.code === "ENOENT") throw new Error(`Fit-model reference not found at ${modelPath}. Set WARDROBE_MODEL_REFERENCE or add data/fit-model-reference.png.`);
             throw error;
           }
           const model = { data: modelData, mime: "image/png", name: "model.png" };
-          const basePrompt = options.modeledPrompt || "Create a professional horizontal 3:2 editorial fashion photograph of the person in Image 1 wearing the exact garment from Image 2. Preserve the person's recognizable identity, face, hair, age and proportions. Preserve every garment color, material, fit, construction, graphic, logo and distinctive detail. Keep the complete featured item clearly visible and unobstructed, use understated neutral supporting clothes, realistic anatomy, natural light, authentic fabric, a tasteful real-world setting, and leave environmental space around the model. No text, watermark, product mockup, or synthetic appearance.";
+          const basePrompt = options.modeledPrompt || "Create a professional horizontal 3:2 editorial fashion photograph of the anonymous fit model in Image 1 wearing the exact garment from Image 2. Preserve only the fit model's slim athletic build and realistic body proportions; never create a recognizable face or likeness. Keep the face outside the frame, turned away, or fully obscured by natural framing and shadow. Preserve every garment color, material, fit, construction, graphic, logo and distinctive detail. Keep the complete featured item clearly visible and unobstructed, use understated neutral supporting clothes, realistic anatomy, natural light, authentic fabric, a tasteful real-world setting, and leave environmental space around the model. No portrait emphasis, text, watermark, product mockup, or synthetic appearance.";
           bytes = await openAIEdit({ key, baseUrl: apiBaseUrl(), model: setting("OPENAI_MODELED_MODEL", setting("OPENAI_IMAGE_MODEL", "gpt-image-2")), quality: setting("OPENAI_IMAGE_QUALITY", "high"), size: "1536x1024", images: [model, garment], prompt: current.stages.modeled.prompt ? `${basePrompt}\nUser regeneration direction: ${current.stages.modeled.prompt}` : basePrompt });
         }
         await writeFile(output, bytes);
@@ -531,7 +531,7 @@ export function wardrobeImportApi(options = {}) {
         if (!setup.ready) {
           const missing = [
             !setup.hasApiKey && "OPENAI_API_KEY in .env",
-            !setup.hasModelReference && `a PNG photo of yourself at ${setup.modelReference}`,
+            !setup.hasModelReference && `an anonymous fit-model PNG at ${setup.modelReference}`,
           ].filter(Boolean).join(" and ");
           return json(res, 503, { error: `Setup required: add ${missing}, then restart the app.` });
         }
