@@ -18,9 +18,12 @@ trap 'rm -rf "$stage"' EXIT
 validate() {
   local root=$1
   local allow_excluded_local=${2:-}
-  jq -e 'type == "array" and length == 18' "$root/library.json" >/dev/null
-  [[ $(find "$root/imported" -maxdepth 1 -type f -name '*-garment.png' | wc -l) -eq 18 ]]
-  [[ $(find "$root/imported" -maxdepth 1 -type f -name '*-modeled.png' | wc -l) -eq 18 ]]
+  local expected_count=${3:-}
+  local item_count
+  item_count=$(jq -er 'if type == "array" and length > 0 then length else error("library must be a non-empty array") end' "$root/library.json")
+  [[ -z $expected_count || $item_count -eq $expected_count ]]
+  [[ $(find "$root/imported" -maxdepth 1 -type f -name '*-garment.png' | wc -l) -eq $item_count ]]
+  [[ $(find "$root/imported" -maxdepth 1 -type f -name '*-modeled.png' | wc -l) -eq $item_count ]]
   [[ -f $root/fit-model-reference.png ]]
   if [[ $allow_excluded_local != allow-excluded-local ]]; then
     [[ ! -e $root/model-reference.png && ! -e $root/jobs && ! -e $root/.env ]]
@@ -65,6 +68,7 @@ if [[ $direction == pull ]]; then
   manifest "$LOCAL_DATA"
 else
   validate "$LOCAL_DATA" allow-excluded-local
+  expected_count=$(jq length "$LOCAL_DATA/library.json")
   ssh "$REMOTE" "sudo test -d '$REMOTE_ROOT/data' && sudo test -f '$REMOTE_ROOT/data/library.json'"
   rsync -a --delete --dry-run --itemize-changes \
     --include='/library.json' --include='/fit-model-reference.png' --include='/imported/***' --exclude='*' \
@@ -79,9 +83,10 @@ else
   ssh "$REMOTE" "sudo flock '$REMOTE_ROOT/sync.lock' bash -s" <<EOF
 set -euo pipefail
 stage=/tmp/wardrobe-sync-$timestamp
-jq -e 'type == "array" and length == 18' "\$stage/library.json" >/dev/null
-test "\$(find "\$stage/imported" -type f -name '*-garment.png' | wc -l)" -eq 18
-test "\$(find "\$stage/imported" -type f -name '*-modeled.png' | wc -l)" -eq 18
+expected_count=$expected_count
+jq -e --argjson expected "\$expected_count" 'type == "array" and length == \$expected' "\$stage/library.json" >/dev/null
+test "\$(find "\$stage/imported" -type f -name '*-garment.png' | wc -l)" -eq "\$expected_count"
+test "\$(find "\$stage/imported" -type f -name '*-modeled.png' | wc -l)" -eq "\$expected_count"
 test -f "\$stage/fit-model-reference.png"
 test ! -e "\$stage/model-reference.png"
 mkdir -p '$REMOTE_ROOT/backups'
@@ -94,10 +99,10 @@ rm -rf "\$stage"
 docker start wardrobe >/dev/null
 EOF
   for _ in {1..24}; do
-    if ssh "$REMOTE" "curl --fail --silent http://127.0.0.1:3210/api/import/wardrobe | jq -e 'length == 18' >/dev/null"; then break; fi
+    if ssh "$REMOTE" "curl --fail --silent http://127.0.0.1:3210/api/import/wardrobe | jq -e 'length == $expected_count' >/dev/null"; then break; fi
     sleep 5
   done
-  ssh "$REMOTE" "curl --fail --silent http://127.0.0.1:3210/api/import/wardrobe | jq -e 'length == 18' >/dev/null"
+  ssh "$REMOTE" "curl --fail --silent http://127.0.0.1:3210/api/import/wardrobe | jq -e 'length == $expected_count' >/dev/null"
   local_manifest=$(manifest "$LOCAL_DATA")
   remote_manifest=$(ssh "$REMOTE" "sudo bash -c 'cd $REMOTE_ROOT/data && find library.json imported fit-model-reference.png -type f -print0 | sort -z | xargs -0 sha256sum'")
   diff -u <(printf '%s\n' "$local_manifest" | tail -n +4) <(printf '%s\n' "$remote_manifest")
