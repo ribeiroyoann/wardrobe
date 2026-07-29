@@ -1,0 +1,32 @@
+services:
+  wardrobe:
+    image: ${WARDROBE_IMAGE:?WARDROBE_IMAGE is required}
+    container_name: wardrobe
+    restart: unless-stopped
+    env_file:
+      - /srv/personal-apps/wardrobe/secrets/app.env
+    environment:
+      TZ: Europe/Paris
+      WARDROBE_DATA_DIR: /app/data
+      WARDROBE_MODEL_REFERENCE: /app/data/fit-model-reference.png
+    ports:
+      - "127.0.0.1:3210:4173"
+    volumes:
+      - /srv/personal-apps/wardrobe/data:/app/data
+    cpus: 1
+    mem_limit: 1g
+    pids_limit: 256
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4173/api/import/wardrobe').then(async r=>{if(!r.ok||!Array.isArray(await r.json()))process.exit(1)}).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s

@@ -66,6 +66,36 @@ If you are setting up Wardrobe for a user, ask how they want to import their clo
 | `WARDROBE_MODEL_REFERENCE` | `data/fit-model-reference.png` |
 | `WARDROBE_DATA_DIR` | `data` |
 
+## Personal VPS deployment
+
+The canonical VPS workspace is `/home/yoann-dev/src/wardrobe`; immutable
+releases and persistent data live under `/srv/personal-apps/wardrobe`.
+Wardrobe binds only to `127.0.0.1:3210` and is published inside the tailnet at
+`https://lcr-dev-vps:8444`.
+
+```bash
+# Deploy the exact pushed commit checked out on the VPS
+./scripts/deploy-vps.sh
+
+# Roll back the application to the previous release (data is untouched)
+./scripts/deploy-vps.sh rollback
+
+# Preview, then pull canonical VPS data to Arch
+./scripts/sync-vps-data.sh pull
+./scripts/sync-vps-data.sh pull --apply
+
+# Preview, then deliberately promote Arch data to the VPS
+./scripts/sync-vps-data.sh push
+./scripts/sync-vps-data.sh push --apply
+```
+
+Only `library.json`, `imported/`, and `fit-model-reference.png` are synchronized.
+Each mutation backs up its destination and validates the JSON, asset counts,
+paths, and checksums. Data restoration is always a separate, manual operation:
+inspect an archive in `/srv/personal-apps/wardrobe/backups`, stop Wardrobe,
+restore explicitly selected files, validate them, then restart and recheck the
+API. Never restore data as part of an application rollback.
+
 ## License
 
 [MIT](LICENSE)
