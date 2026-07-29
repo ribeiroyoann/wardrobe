@@ -55,7 +55,9 @@ if [[ $direction == pull ]]; then
   validate "$stage"
   mkdir -p "$LOCAL_DATA-backups"
   tar -C "$LOCAL_DATA" -czf "$LOCAL_DATA-backups/$timestamp.tar.gz" library.json imported fit-model-reference.png
-  rsync -a --delete "$stage/" "$LOCAL_DATA/"
+  install -m 0644 "$stage/library.json" "$LOCAL_DATA/library.json"
+  install -m 0644 "$stage/fit-model-reference.png" "$LOCAL_DATA/fit-model-reference.png"
+  rsync -a --delete "$stage/imported/" "$LOCAL_DATA/imported/"
   validate "$LOCAL_DATA"
   manifest "$LOCAL_DATA"
 else
