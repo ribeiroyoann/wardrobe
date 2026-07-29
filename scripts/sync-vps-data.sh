@@ -34,9 +34,9 @@ manifest() {
   local root=$1
   (
     cd "$root"
-    printf 'entries\\t%s\\n' "$(jq length library.json)"
-    printf 'files\\t%s\\n' "$(find imported -type f | wc -l)"
-    printf 'bytes\\t%s\\n' "$(du -sb library.json imported fit-model-reference.png | awk '{s+=$1} END {print s}')"
+    printf 'entries\t%s\n' "$(jq length library.json)"
+    printf 'files\t%s\n' "$(find imported -type f | wc -l)"
+    printf 'bytes\t%s\n' "$(du -sb library.json imported fit-model-reference.png | awk '{s+=$1} END {print s}')"
     find library.json imported fit-model-reference.png -type f -print0 |
       sort -z | xargs -0 sha256sum
   )
