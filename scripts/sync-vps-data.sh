@@ -17,11 +17,14 @@ trap 'rm -rf "$stage"' EXIT
 
 validate() {
   local root=$1
+  local allow_excluded_local=${2:-}
   jq -e 'type == "array" and length == 18' "$root/library.json" >/dev/null
   [[ $(find "$root/imported" -maxdepth 1 -type f -name '*-garment.png' | wc -l) -eq 18 ]]
   [[ $(find "$root/imported" -maxdepth 1 -type f -name '*-modeled.png' | wc -l) -eq 18 ]]
   [[ -f $root/fit-model-reference.png ]]
-  [[ ! -e $root/model-reference.png && ! -e $root/jobs && ! -e $root/.env ]]
+  if [[ $allow_excluded_local != allow-excluded-local ]]; then
+    [[ ! -e $root/model-reference.png && ! -e $root/jobs && ! -e $root/.env ]]
+  fi
   while IFS= read -r url; do
     [[ -f "$root/imported/${url##*/}" ]] || { echo "Missing asset for $url" >&2; return 1; }
   done < <(jq -r '.[] | .image, .modeledImage' "$root/library.json")
@@ -58,10 +61,10 @@ if [[ $direction == pull ]]; then
   install -m 0644 "$stage/library.json" "$LOCAL_DATA/library.json"
   install -m 0644 "$stage/fit-model-reference.png" "$LOCAL_DATA/fit-model-reference.png"
   rsync -a --delete "$stage/imported/" "$LOCAL_DATA/imported/"
-  validate "$LOCAL_DATA"
+  validate "$LOCAL_DATA" allow-excluded-local
   manifest "$LOCAL_DATA"
 else
-  validate "$LOCAL_DATA"
+  validate "$LOCAL_DATA" allow-excluded-local
   ssh "$REMOTE" "sudo test -d '$REMOTE_ROOT/data' && sudo test -f '$REMOTE_ROOT/data/library.json'"
   rsync -a --delete --dry-run --itemize-changes \
     --include='/library.json' --include='/fit-model-reference.png' --include='/imported/***' --exclude='*' \
